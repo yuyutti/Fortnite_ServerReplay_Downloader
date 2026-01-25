@@ -1,41 +1,38 @@
 #!/usr/bin/env node
 
 const path = require("path");
-const { downloadReplay } = require("./index");
+const os = require("os");
+const { saveReplay } = require("./index");
 
-const [, , matchId, outputDir] = process.argv;
+const [, , matchId, outputArg] = process.argv;
 
 if (!matchId) {
     console.error("Usage: fortnite-serverreplay-downloader <matchId> [outputDir]");
     process.exit(1);
 }
 
-const cleanedMatchId = matchId.replace(/-/g, "");
-if (cleanedMatchId.length !== 32) {
-    console.error("Match ID must be 32 characters (hyphens allowed)");
-    process.exit(1);
-}
+// OS標準のホームディレクトリ取得
+const homeDir = os.homedir();
 
-const saveDir =
-    outputDir ||
-    path.join(
-        process.env.USERPROFILE || process.env.HOME,
-        "Downloads",
-        "replay-files"
-    );
-
-const savePath = path.join(
-    saveDir,
-    `TournamentMatch_${cleanedMatchId}.replay`
+// デフォルト保存先を OS 非依存で構築
+const defaultSaveDir = path.join(
+    homeDir,
+    "Downloads",
+    "replay-files"
 );
 
-console.log("Downloading replay...");
-console.log("Match ID:", cleanedMatchId);
-console.log("Save to:", savePath);
+// ユーザー指定があればそれを使う
+const savePath = outputArg
+    ? path.resolve(outputArg)
+    : defaultSaveDir;
 
-downloadReplay({
-    matchId: cleanedMatchId,
-    outputPath: savePath,
+console.log("Downloading replay...");
+console.log("Match ID:", matchId);
+console.log("Save path:", savePath);
+
+saveReplay({
+    matchId,
+    outputDir: savePath,
     maxConcurrentDownloads: 10,
     updateCallback: (data) => {
         process.stdout.write(
@@ -43,10 +40,11 @@ downloadReplay({
         );
     },
 })
-.then(() => {
-    console.log("\nDownload complete!");
-})
-.catch((err) => {
-    console.error("\nDownload failed:", err);
-    process.exit(1);
-});
+    .then((filePath) => {
+        console.log("\nDownload complete!");
+        console.log("Saved to:", filePath);
+    })
+    .catch((err) => {
+        console.error("\nDownload failed:", err?.message || err);
+        process.exit(1);
+    });
