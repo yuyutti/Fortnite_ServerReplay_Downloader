@@ -1,10 +1,10 @@
 {
     "name": "fortnite-serverreplay-downloader",
-    "version": "0.0.3",
+    "version": "1.0.0",
     "description": "Download Fortnite replay files from Epic Games servers. Inspired by xNocken's replay-downloader.",
     "author": "yuyutti",
     "license": "MIT",
-    "homepage": "https://github.com/yuyutti/Fortnite_Replay_Downloader#readme",
+    "homepage": "https://github.com/yuyutti/Fortnite_Replay_Downloader",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yuyutti/Fortnite_Replay_Downloader.git"
