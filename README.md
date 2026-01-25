@@ -25,7 +25,7 @@ directly from Epic Games servers.
 ### npm (as a library)
 
 ```bash  
-npm install fortnite-serverreplay-downloader  
+npm install fortnite-serverreplay-downloader@latest  
 ```
 
 ### npx (as a CLI)
