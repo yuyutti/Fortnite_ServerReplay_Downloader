@@ -1,3 +1,8 @@
+## 🌐 Language
+
+- [English](./README.md)
+- [日本語](./README.ja.md)
+
 # Fortnite Server Replay Downloader
 
 A Node.js library / CLI tool to download **Fortnite server replay (.replay)** files  
