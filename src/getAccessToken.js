@@ -1,5 +1,13 @@
 const needle = require('needle');
+
+const os = require('os');
 const fs = require('fs');
+const path = require('path');
+
+const CACHE_PATH = path.join(
+  os.tmpdir(),
+  'fortnite-auth-cache.json'
+);
 
 const {
   authClientId,
@@ -70,13 +78,14 @@ const getCachedToken = async (cache) => {
 };
 
 const fetchToken = async () => {
-  const { body: tokenData, statusCode } = await needle('post', tokenEndpoint, body, options);
+  const { body: tokenData, statusCode } =
+    await needle('post', tokenEndpoint, body, options);
 
   if (statusCode !== 200 || tokenData.error) {
     throw new UnsuccessfulRequestException(statusCode, tokenData);
   }
 
-  fs.writeFileSync(`${module.path}/../cache.json`, JSON.stringify(tokenData));
+  fs.writeFileSync(CACHE_PATH, JSON.stringify(tokenData));
 
   return {
     token: `${tokenData.token_type} ${tokenData.access_token}`,
@@ -87,11 +96,10 @@ const fetchToken = async () => {
 const getAccessToken = async () => {
   let cache = {};
 
-  if (fs.existsSync(`${module.path}/../cache.json`)) {
-    cache = JSON.parse(fs.readFileSync(`${module.path}/../cache.json`));
+  if (fs.existsSync(CACHE_PATH)) {
+    cache = JSON.parse(fs.readFileSync(CACHE_PATH));
 
     const cachedToken = await getCachedToken(cache);
-
     if (cachedToken) {
       return cachedToken;
     }
