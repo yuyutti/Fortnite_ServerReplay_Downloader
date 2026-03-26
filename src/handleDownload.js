@@ -11,7 +11,7 @@ const handleDownload = async (chunks, maxConcurrentDownloads, updateCallback) =>
         .sort((a, b) => a.r - b.r)
         .map(({ v }) => v);
 
-    const limit = pLimit(maxConcurrentDownloads || 6);
+    const limit = pLimit(maxConcurrentDownloads || 3);
     let active = 0;
 
     const results = new Array(chunks.length);
