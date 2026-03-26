@@ -1,3 +1,5 @@
+// src/UnsuccessfulRequestException.js
+
 class UnsuccessfulRequestException extends Error {
   constructor(code, response) {
     super(response.errorMessage || response.children?.[0]?.value || response.errorCode || 'request failed');

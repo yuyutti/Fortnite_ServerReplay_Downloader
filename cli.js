@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// cli.js
+
 const path = require("path");
 const os = require("os");
 const { saveReplay } = require("./index");

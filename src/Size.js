@@ -1,3 +1,5 @@
+// src/Size.js
+
 class Size {
   size = 0;
 
