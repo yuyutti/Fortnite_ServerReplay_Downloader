@@ -1,34 +1,49 @@
 // src/handleDownload.js
 
-const downloadFileWithLink = require('./downloadFileWithLink');
+const pLimit = require("p-limit").default;
+const downloadFileWithLink = require("./downloadFileWithLink");
 
 const handleDownload = async (chunks, maxConcurrentDownloads, updateCallback) => {
-  const downloads = [];
-  const results = [];
+    // ★ 大きい順 + 軽くランダム化（偏り防止）
+    chunks.sort((a, b) => b.size - a.size);
+    chunks = chunks
+        .map((v) => ({ v, r: Math.random() }))
+        .sort((a, b) => a.r - b.r)
+        .map(({ v }) => v);
 
-  chunks.splice(0, maxConcurrentDownloads || Infinity).forEach((chunk, index) => {
-    const download = async () => {
-      const data = await downloadFileWithLink(chunk.DownloadLink, chunk.encoding);
+    const limit = pLimit(maxConcurrentDownloads || 6);
+    let active = 0;
 
-      results[index] = {
-        ...chunk,
-        size: chunk.size + data.length,
-        data,
-      };
+    const results = new Array(chunks.length);
 
-      updateCallback(chunk.chunkType);
-    };
+    await Promise.all(
+        chunks.map((chunk, index) =>
+            limit(async () => {
+                const startTime = Date.now();
 
-    downloads.push(download());
-  });
+                active++;
 
-  await Promise.all(downloads);
+                try {
+                    // ★ retryはdownloadFileWithLink側に任せる
+                    const data = await downloadFileWithLink(chunk.DownloadLink);
 
-  if (chunks.length) {
-    results.push(...await handleDownload(chunks, maxConcurrentDownloads, updateCallback));
-  }
+                    const duration = Date.now() - startTime;
+                    updateCallback(chunk.chunkType);
 
-  return results;
+                    results[index] = {
+                        ...chunk,
+                        size: chunk.size + data.length,
+                        data,
+                        duration,
+                    };
+                } finally {
+                    active--;
+                }
+            })
+        )
+    );
+
+    return results;
 };
 
 module.exports = handleDownload;

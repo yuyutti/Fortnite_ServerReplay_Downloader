@@ -1,6 +1,6 @@
 {
     "name": "fortnite-serverreplay-downloader",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "Download Fortnite replay files from Epic Games servers. Inspired by xNocken's replay-downloader.",
     "author": "yuyutti",
     "license": "MIT",
@@ -19,6 +19,7 @@
         "epic-games"
     ],
     "dependencies": {
-        "needle": "^2.9.1"
+        "needle": "^2.9.1",
+        "p-limit": "^7.3.0"
     }
 }

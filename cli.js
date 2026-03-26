@@ -35,7 +35,7 @@ console.log("Save path:", savePath);
 saveReplay({
     matchId,
     outputDir: savePath,
-    maxConcurrentDownloads: 10,
+    maxConcurrentDownloads: 6,
     updateCallback: (data) => {
         process.stdout.write(
             `\rData: ${data.dataChunks.current}/${data.dataChunks.max}`
