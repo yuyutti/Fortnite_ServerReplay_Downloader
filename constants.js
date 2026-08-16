@@ -6,6 +6,7 @@ const constants = {
   tokenEndpoint: 'https://account-public-service-prod.ol.epicgames.com/account/api/oauth/token',
   verifyEndpoint: 'https://account-public-service-prod.ol.epicgames.com/account/api/oauth/verify',
   timeUntilNextCheck: 120,
+  defaultMaxConcurrentDownloads: 16,
 };
 
 module.exports = constants;

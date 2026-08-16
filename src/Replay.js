@@ -23,51 +23,51 @@ class Replay {
   }
 
   writeInt64(value, offset) {
-    if (!offset) {
+    if (offset == null) {
       this.offset += 8;
     }
 
-    return this.buffer.writeBigInt64LE(BigInt(value), offset || this.offset - 8);
+    return this.buffer.writeBigInt64LE(BigInt(value), offset ?? this.offset - 8);
   }
 
   writeInt32(value, offset) {
-    if (!offset) {
+    if (offset == null) {
       this.offset += 4;
     }
 
-    return this.buffer.writeInt32LE(value, offset || this.offset - 4);
+    return this.buffer.writeInt32LE(value, offset ?? this.offset - 4);
   }
 
   writeUInt32(value, offset) {
-    if (!offset) {
+    if (offset == null) {
       this.offset += 4;
     }
 
-    return this.buffer.writeUInt32LE(value, offset || this.offset - 4);
+    return this.buffer.writeUInt32LE(value, offset ?? this.offset - 4);
   }
 
   writeInt16(value, offset) {
-    if (!offset) {
+    if (offset == null) {
       this.offset += 2;
     }
 
-    return this.buffer.writeInt16LE(value, offset || this.offset - 2);
+    return this.buffer.writeInt16LE(value, offset ?? this.offset - 2);
   }
 
   writeUInt16(value, offset) {
-    if (!offset) {
+    if (offset == null) {
       this.offset += 2;
     }
 
-    return this.buffer.writeUInt16LE(value, offset || this.offset - 2);
+    return this.buffer.writeUInt16LE(value, offset ?? this.offset - 2);
   }
 
   writeByte(value, offset) {
-    if (!offset) {
+    if (offset == null) {
       this.offset += 1;
     }
 
-    this.buffer[offset || (this.offset - 1)] = value & 255;
+    this.buffer[offset ?? (this.offset - 1)] = value & 255;
   }
 
   writeGuid(guid) {
@@ -75,17 +75,35 @@ class Replay {
   }
 
   writeString(string, offset) {
-    this.writeInt32(string.length + 1, offset);
+    const bytes = Buffer.from(string, 'utf8');
 
-    this.writeBytes(Buffer.from(string, offset + 4));
+    if (offset == null) {
+      this.writeInt32(bytes.length + 1);
+      this.writeBytes(bytes);
+      this.writeByte(0);
+      return;
+    }
 
-    this.writeByte(0, offset);
+    this.writeInt32(bytes.length + 1, offset);
+    this.writeBytes(bytes, offset + 4);
+    this.writeByte(0, offset + 4 + bytes.length);
   }
 
   writeBytes(bytes, offset) {
-    bytes.forEach((byte, index) => {
-      this.writeByte(byte, offset + index);
-    });
+    const source = Buffer.isBuffer(bytes)
+      ? bytes
+      : Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const targetOffset = offset ?? this.offset;
+
+    if (targetOffset < 0 || targetOffset + source.length > this.buffer.length) {
+      throw new RangeError('Attempted to write beyond the replay buffer');
+    }
+
+    source.copy(this.buffer, targetOffset);
+
+    if (offset == null) {
+      this.offset += source.length;
+    }
   }
 
   writeArray(array, fn) {

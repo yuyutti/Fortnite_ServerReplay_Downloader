@@ -49,6 +49,7 @@ interface MetaDataResult {
 interface MetaDataOptions {
   matchId: string,
   chunkDownloadLinks: boolean,
+  debugCallback?: (event: DebugEvent) => void,
 }
 
 interface UpdateInfo {
@@ -58,20 +59,50 @@ interface UpdateInfo {
 
 interface UpdateObject {
   header: UpdateInfo,
-  data: UpdateInfo
-  events: UpdateInfo,
-  checkpoints: UpdateInfo,
+  dataChunks: UpdateInfo,
+  eventChunks: UpdateInfo,
+  checkpointChunks: UpdateInfo,
 }
 
 interface ReplayOptions {
   matchId: string,
   maxConcurrentDownloads?: number,
+  httpClient?: 'needle' | 'fetch',
   checkpointCount?: number,
   dataCount?: number,
   eventCount?: number,
   updateCallback?: (UpdateInfo: UpdateObject) => void,
+  debugCallback?: (event: DebugEvent) => void,
+}
+
+interface DebugEvent {
+  timestamp: string,
+  type: string,
+  client?: 'needle' | 'fetch',
+  requestKind?: string,
+  chunkId?: string | null,
+  chunkType?: number | null,
+  url?: string | null,
+  attempt?: number,
+  maximumAttempts?: number,
+  durationMs?: number,
+  retryDelayMs?: number,
+  bytes?: number,
+  statusCode?: number | null,
+  httpVersion?: string | null,
+  alpnProtocol?: string | null,
+  errorName?: string,
+  errorMessage?: string,
+  errorCode?: string | number | null,
+}
+
+interface SaveReplayOptions extends ReplayOptions {
+  outputDir: string,
+  fileName?: string,
 }
 
 export function downloadMetadata(options: MetaDataOptions): Promise<MetaDataResult>;
 
 export function downloadReplay(options: ReplayOptions): Promise<Buffer>;
+
+export function saveReplay(options: SaveReplayOptions): Promise<string>;

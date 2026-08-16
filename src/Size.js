@@ -4,7 +4,7 @@ class Size {
   size = 0;
 
   getBuffer() {
-    return Buffer.from({ length: this.size + (this.bitSize ? 1 : 0) });
+    return Buffer.alloc(this.size + (this.bitSize ? 1 : 0));
   }
 
   validate(replay) {

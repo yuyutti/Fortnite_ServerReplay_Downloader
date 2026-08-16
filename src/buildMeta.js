@@ -8,7 +8,7 @@ const buildMeta = (header) => {
 
   size.size += 44;
 
-  size.size += header.FriendlyName.length + 5;
+  size.size += Buffer.byteLength(header.FriendlyName, 'utf8') + 5;
 
   const buffer = new Replay(size.getBuffer());
 

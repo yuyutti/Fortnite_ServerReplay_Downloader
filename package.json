@@ -1,16 +1,16 @@
 {
     "name": "fortnite-serverreplay-downloader",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "description": "Download Fortnite replay files from Epic Games servers. Inspired by xNocken's replay-downloader.",
     "author": "yuyutti",
     "license": "MIT",
-    "homepage": "https://github.com/yuyutti/Fortnite_Replay_Downloader",
+    "homepage": "https://github.com/yuyutti/Fortnite_ServerReplay_Downloader",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/yuyutti/Fortnite_Replay_Downloader.git"
+        "url": "git+https://github.com/yuyutti/Fortnite_ServerReplay_Downloader.git"
     },
     "bin": {
-        "fortnite-serverreplay-downloader": "./cli.js"
+        "fortnite-serverreplay-downloader": "cli.js"
     },
     "keywords": [
         "fortnite",
@@ -18,6 +18,9 @@
         "downloader",
         "epic-games"
     ],
+    "engines": {
+        "node": ">=20.19.0"
+    },
     "files": [
         "index.js",
         "index.d.ts",
@@ -29,6 +32,10 @@
         "README.ja.md",
         "LICENSE"
     ],
+    "scripts": {
+        "test": "node --test test/*.test.js",
+        "prepublishOnly": "npm test"
+    },
     "dependencies": {
         "needle": "^2.9.1",
         "p-limit": "^7.3.0"

@@ -1,2 +1,4 @@
 /.history
 /node_modules
+/benchmark-results
+benchmark-concurrency.js

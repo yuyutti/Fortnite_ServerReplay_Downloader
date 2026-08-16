@@ -53,6 +53,18 @@ npx fortnite-serverreplay-downloader <matchId>
 npx fortnite-serverreplay-downloader <matchId> ./replays  
 ```
 
+The default concurrency is `16`. You can tune it for your connection and CDN conditions.
+
+```bash
+npx fortnite-serverreplay-downloader <matchId> ./replays --concurrency 6
+```
+
+Chunk downloads use `needle` by default. You can compare it with Node.js built-in `fetch`.
+
+```bash
+npx fortnite-serverreplay-downloader <matchId> ./replays --http-client fetch
+```
+
 ### Global installation
 
 ```bash  
@@ -73,7 +85,7 @@ const { saveReplay } = require("fortnite-serverreplay-downloader");
     const filePath = await saveReplay({
         matchId: "39610d978fe442ecb8729e24592f868a",
         outputDir: "./replays",
-        maxConcurrentDownloads: 10,
+        maxConcurrentDownloads: 16,
     });
 
     console.log("Saved:", filePath);
@@ -121,7 +133,7 @@ const { downloadReplay } = require("fortnite-serverreplay-downloader");
         "TournamentMatch.replay"
     );
 
-    fs.writeFileSync(savePath, buffer);
+    await fs.promises.writeFile(savePath, buffer);
 })();
 ```
 
@@ -136,11 +148,21 @@ saveReplay({
     matchId: string,
     outputDir: string,
     maxConcurrentDownloads?: number,
+    httpClient?: "needle" | "fetch",
     updateCallback?: (progress) => void,
+    debugCallback?: (event) => void,
+    fileName?: string,
+    checkpointCount?: number,
+    dataCount?: number,
+    eventCount?: number,
 }) => Promise<string>
 ```
 
 - Downloads and saves a .replay file
+- Streams HTTP responses directly to temporary files instead of retaining every chunk in memory
+- `maxConcurrentDownloads` defaults to `16` and must be a positive integer
+- `httpClient` defaults to `needle`; `fetch` is available for comparison
+- `debugCallback` reports HTTP versions, durations, retries, and errors
 - Returns the saved file path
 
 ---
@@ -151,12 +173,17 @@ saveReplay({
 downloadReplay({
     matchId: string,
     maxConcurrentDownloads?: number,
+    httpClient?: "needle" | "fetch",
     updateCallback?: (progress) => void,
+    debugCallback?: (event) => void,
 }) => Promise<Buffer>
 ```
 
 - Downloads a .replay file and returns it as a Buffer
+- `maxConcurrentDownloads` defaults to `16` and must be a positive integer
 - Does not save the file
+
+Signed query parameters and other URL search parameters are removed from HTTP debug events.
 
 ---
 

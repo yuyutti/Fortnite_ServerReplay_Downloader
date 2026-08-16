@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 const path = require('path');
+const { defaultMaxConcurrentDownloads } = require('./constants');
 
 const needlePath = path.join(__dirname, 'node_modules', 'needle');
 if (!fs.existsSync(needlePath)) {
@@ -15,11 +16,11 @@ if (!fs.existsSync(needlePath)) {
 }
 
 const replayDownloader = require('.');
-let [id, savePath, ...fa] = process.argv.slice(2);
+const [id, savePath, ...fa] = process.argv.slice(2);
 
 // ユーザー名を自動取得
 const defaultPath = `c:/Users/${process.env.USERNAME}/Downloads/replay-downloader-ReplayFiles`; //リプレイファイルを保存するフォルダのパス
-type = 'replay'; //ファイルのタイプ(変更する必要なし)
+const type = 'replay'; //ファイルのタイプ(変更する必要なし)
 const save_name = `TournamentMatch_${id}`;
 
 const UpdatedbasePath = savePath || defaultPath;
@@ -39,12 +40,14 @@ if (fa.includes('--event') || fa.includes('-e')) event = true;
 if (fa.includes('--no-data') || fa.includes('-nd')) packets = false;
 
 if (type === 'replay') {
-  replayDownloader.downloadReplay({
+  replayDownloader.saveReplay({
     matchId: id,
+    outputDir: SaveFilePath,
+    fileName: `${save_name}.replay`,
     eventCount: event ? 1000 : 0,
     dataCount: packets ? 1000 : 0,
     checkpointCount: checkpoint ? 1000 : 0,
-    maxConcurrentDownloads: 3,
+    maxConcurrentDownloads: defaultMaxConcurrentDownloads,
     updateCallback: (data) => {
       process.stdout.write(`\rデータ取得中 : ${data.dataChunks.current}/${data.dataChunks.max}`);
       if (data.dataChunks.current === data.dataChunks.max && data.dataChunks.max !== 0) {
@@ -52,9 +55,8 @@ if (type === 'replay') {
         console.log('データ取得が完了しました');
       }
     },
-  }).then((replay) => {
-    fs.writeFileSync(`${SaveFilePath}${save_name}.replay`, replay);
-    console.log(`\n${SaveFilePath}${save_name}.replay にファイルを保存\n`);
+  }).then((filePath) => {
+    console.log(`\n${filePath} にファイルを保存\n`);
   }).catch((err) => {
     console.log(err);
   });
@@ -62,8 +64,8 @@ if (type === 'replay') {
   replayDownloader.downloadMetadata({
     matchId: id,
     chunkDownloadLinks: true,
-  }).then((metadata) => {
-    fs.writeFileSync(`${id}.json`, JSON.stringify(metadata, null, 2));
+  }).then(async (metadata) => {
+    await fs.promises.writeFile(`${id}.json`, JSON.stringify(metadata, null, 2));
   }).catch((err) => {
     console.log(err);
   });

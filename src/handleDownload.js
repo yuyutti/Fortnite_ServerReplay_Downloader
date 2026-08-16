@@ -2,26 +2,28 @@
 
 const pLimit = require("p-limit").default;
 const downloadFileWithLink = require("./downloadFileWithLink");
+const sortChunksByFileSize = require("./sortChunksByFileSize");
 
-const handleDownload = async (chunks, maxConcurrentDownloads, updateCallback) => {
+const handleDownload = async (
+    chunks,
+    maxConcurrentDownloads,
+    updateCallback,
+    requestOptions = {}
+) => {
     // ★ 元の順番を保持するため index を付与
     const indexedChunks = chunks.map((chunk, index) => ({
         ...chunk,
         originalIndex: index,
     }));
 
-    // ★ 大きい順 + 軽くランダム化（処理効率UP）
-    const shuffledChunks = indexedChunks
-        .sort((a, b) => b.size - a.size)
-        .map((v) => ({ v, r: Math.random() }))
-        .sort((a, b) => a.r - b.r)
-        .map(({ v }) => v);
+    // 大きいファイルから開始し、最後に巨大な1件だけが残る状況を減らす
+    const sortedChunks = sortChunksByFileSize(indexedChunks);
 
-    const limit = pLimit(maxConcurrentDownloads || 3);
+    const limit = pLimit(maxConcurrentDownloads);
     const results = new Array(chunks.length);
 
     await Promise.all(
-        shuffledChunks.map((chunk) =>
+        sortedChunks.map((chunk) =>
             limit(async () => {
                 const startTime = Date.now();
 
@@ -29,7 +31,12 @@ const handleDownload = async (chunks, maxConcurrentDownloads, updateCallback) =>
                     // ★ encodingもちゃんと渡す（重要）
                     const data = await downloadFileWithLink(
                         chunk.DownloadLink,
-                        chunk.encoding
+                        chunk.encoding,
+                        {
+                            ...requestOptions,
+                            chunkId: chunk.Id || (chunk.chunkType === 0 ? 'header' : null),
+                            chunkType: chunk.chunkType,
+                        }
                     );
 
                     const duration = Date.now() - startTime;

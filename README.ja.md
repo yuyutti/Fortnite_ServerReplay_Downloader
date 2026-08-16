@@ -53,6 +53,18 @@ npx fortnite-serverreplay-downloader <matchId>
 npx fortnite-serverreplay-downloader <matchId> ./replays  
 ```
 
+同時ダウンロード数のデフォルトは `16` です。回線やCDNの状態に応じて変更できます。
+
+```bash
+npx fortnite-serverreplay-downloader <matchId> ./replays --concurrency 6
+```
+
+チャンク取得にはデフォルトで `needle` を使用します。Node.js標準の`fetch`とも比較できます。
+
+```bash
+npx fortnite-serverreplay-downloader <matchId> ./replays --http-client fetch
+```
+
 ### グローバルインストール
 
 ```bash  
@@ -73,7 +85,7 @@ const { saveReplay } = require("fortnite-serverreplay-downloader");
     const filePath = await saveReplay({
         matchId: "39610d978fe442ecb8729e24592f868a",
         outputDir: "./replays",
-        maxConcurrentDownloads: 10,
+        maxConcurrentDownloads: 16,
     });
 
     console.log("Saved:", filePath);
@@ -121,7 +133,7 @@ const { downloadReplay } = require("fortnite-serverreplay-downloader");
         "TournamentMatch.replay"
     );
 
-    fs.writeFileSync(savePath, buffer);
+    await fs.promises.writeFile(savePath, buffer);
 })();
 ```
 
@@ -136,11 +148,21 @@ saveReplay({
     matchId: string,
     outputDir: string,
     maxConcurrentDownloads?: number,
+    httpClient?: "needle" | "fetch",
     updateCallback?: (progress) => void,
+    debugCallback?: (event) => void,
+    fileName?: string,
+    checkpointCount?: number,
+    dataCount?: number,
+    eventCount?: number,
 }) => Promise<string>
 ```
 
 - .replay をダウンロードして保存
+- HTTPレスポンスを一時ファイルへ直接ストリーミングし、全チャンクをメモリに保持せずに保存
+- `maxConcurrentDownloads` のデフォルトは `16`（1以上の整数）
+- `httpClient` のデフォルトは `needle`。比較用に`fetch`も選択可能
+- `debugCallback`でHTTPバージョン、所要時間、リトライ、エラーを取得可能
 - 戻り値：保存されたファイルパス
 
 ---
@@ -151,12 +173,17 @@ saveReplay({
 downloadReplay({
     matchId: string,
     maxConcurrentDownloads?: number,
+    httpClient?: "needle" | "fetch",
     updateCallback?: (progress) => void,
+    debugCallback?: (event) => void,
 }) => Promise<Buffer>
 ```
 
 - .replay を **Buffer として取得**
+- `maxConcurrentDownloads` のデフォルトは `16`（1以上の整数）
 - 保存処理は行わない
+
+HTTPデバッグイベントに含まれるURLからは、署名クエリなどの検索パラメータが除去されます。
 
 ---
 

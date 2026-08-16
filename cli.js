@@ -5,11 +5,53 @@
 const path = require("path");
 const os = require("os");
 const { saveReplay } = require("./index");
+const { defaultMaxConcurrentDownloads } = require("./constants");
 
-const [, , matchId, outputArg] = process.argv;
+const [, , matchId, ...args] = process.argv;
 
 if (!matchId) {
-    console.error("Usage: fortnite-serverreplay-downloader <matchId> [outputDir]");
+    console.error(
+        "Usage: fortnite-serverreplay-downloader <matchId> [outputDir] "
+        + "[--concurrency <number>] [--http-client <needle|fetch>]"
+    );
+    process.exit(1);
+}
+
+let outputArg;
+let maxConcurrentDownloads = defaultMaxConcurrentDownloads;
+let httpClient = "needle";
+
+for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+
+    if (argument === "--concurrency" || argument === "-j") {
+        maxConcurrentDownloads = Number(args[index + 1]);
+        index += 1;
+    } else if (argument.startsWith("--concurrency=")) {
+        maxConcurrentDownloads = Number(argument.slice("--concurrency=".length));
+    } else if (argument === "--http-client") {
+        httpClient = args[index + 1];
+        index += 1;
+    } else if (argument.startsWith("--http-client=")) {
+        httpClient = argument.slice("--http-client=".length);
+    } else if (argument.startsWith("-")) {
+        console.error("Unknown argument:", argument);
+        process.exit(1);
+    } else if (!outputArg) {
+        outputArg = argument;
+    } else {
+        console.error("Unknown argument:", argument);
+        process.exit(1);
+    }
+}
+
+if (!Number.isInteger(maxConcurrentDownloads) || maxConcurrentDownloads < 1) {
+    console.error("Concurrency must be a positive integer");
+    process.exit(1);
+}
+
+if (!["needle", "fetch"].includes(httpClient)) {
+    console.error("HTTP client must be either needle or fetch");
     process.exit(1);
 }
 
@@ -35,7 +77,8 @@ console.log("Save path:", savePath);
 saveReplay({
     matchId,
     outputDir: savePath,
-    maxConcurrentDownloads: 3,
+    maxConcurrentDownloads,
+    httpClient,
     updateCallback: (data) => {
         process.stdout.write(
             `\rData: ${data.dataChunks.current}/${data.dataChunks.max}`

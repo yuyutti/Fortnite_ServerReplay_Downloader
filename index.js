@@ -1,22 +1,32 @@
 // index.js
 const fs = require("fs");
 const path = require("path");
-const { downloadReplay, downloadMetadata } = require("./core");
+const { defaultMaxConcurrentDownloads } = require("./constants");
+const {
+    downloadReplay,
+    downloadReplayToFile,
+    downloadMetadata,
+} = require("./core");
 
 function normalizeMatchId(matchId) {
     return String(matchId || "").replace(/-/g, "");
 }
 
-function ensureDir(dirPath) {
-    fs.mkdirSync(dirPath, { recursive: true });
+async function ensureDir(dirPath) {
+    await fs.promises.mkdir(dirPath, { recursive: true });
 }
 
 async function saveReplay({
     matchId,
     outputDir,
-    maxConcurrentDownloads = Infinity,
+    maxConcurrentDownloads = defaultMaxConcurrentDownloads,
     updateCallback = () => {},
+    debugCallback = () => {},
+    httpClient = "needle",
     fileName,
+    checkpointCount,
+    dataCount,
+    eventCount,
 }) {
     const cleanedMatchId = normalizeMatchId(matchId);
 
@@ -37,7 +47,7 @@ async function saveReplay({
         ? path.dirname(resolvedOutputPath)
         : resolvedOutputPath;
 
-    ensureDir(outputDirectory);
+    await ensureDir(outputDirectory);
 
     const outputFilePath = hasExtension
         ? resolvedOutputPath
@@ -46,13 +56,17 @@ async function saveReplay({
             fileName || `TournamentMatch_${cleanedMatchId}.replay`
         );
 
-    const buffer = await downloadReplay({
+    await downloadReplayToFile({
         matchId: cleanedMatchId,
         maxConcurrentDownloads,
         updateCallback,
-    });
+        debugCallback,
+        httpClient,
+        checkpointCount,
+        dataCount,
+        eventCount,
+    }, outputFilePath);
 
-    fs.writeFileSync(outputFilePath, buffer);
     return outputFilePath;
 }
 

@@ -63,6 +63,8 @@ const buildReplay = (parts) => {
     }
   });
 
+  size.validate(newBuffer);
+
   return newBuffer.buffer;
 };
 
